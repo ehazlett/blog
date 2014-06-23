@@ -1,0 +1,10 @@
+---
+languageCode: "en-us"
+title: "@ehazlett"
+theme: "hyde"
+canonifyurls: true
+disqusShortname: "ehazlettgithub"
+permalinks:
+    post: /:year/:month/:title/
+params:
+    Description: go get ehazlett

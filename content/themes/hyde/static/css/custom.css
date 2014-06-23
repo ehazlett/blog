@@ -1,0 +1,14 @@
+.read-more {
+    font-size: 85%;
+    font-style: italic;
+    padding-left: 10px;
+}
+ul.links {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+ul.links li {
+    display: inline;
+    padding: 10px;
+}

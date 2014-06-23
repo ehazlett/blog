@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+      <title>Development on ehazlett </title>
+      <generator uri="https://hugo.spf13.com">Hugo</generator>
+    <link>http://localhost:1313/categories/development/index.xml</link>
+    <language>en-us</language>
+    
+    
+    <updated>Sun, 22 Jun 2014 23:30:11 UTC</updated>
+    
+    <item>
+      <title>docker registry</title>
+      <link>http://localhost:1313/2014/06/docker-registry/</link>
+      <pubDate>Sun, 22 Jun 2014 23:30:11 UTC</pubDate>
+      
+      <guid>http://localhost:1313/2014/06/docker-registry/</guid>
+      <description>&lt;p&gt;One of the best features in &lt;a href=&#34;http://docker.io&#34;&gt;Docker&lt;/a&gt; is the ability to build and share images.  The public Docker index is a great place to find and share images.  However, if you want to have a private registry that is in your control (inside the firewall, etc.) this is where the &lt;a href=&#34;https://github.com/dotcloud/docker-registry&#34;&gt;Docker Registry&lt;/a&gt; shines.&lt;/p&gt;
+
+&lt;p&gt;The Docker Registry is an application that powers the public index.  The Docker team has put a lot of work into making it easy to run a standalone registry.  This gives you a complete registry in your control.&lt;/p&gt;
+
+&lt;p&gt;With this deployed you can have a private image store but anyone can push/pull to and from it.  To make it private, I augmented the &lt;code&gt;stackbrew/registry&lt;/code&gt; image with Nginx that requires authentication.  I also added a simple Flask application that enables user management.&lt;/p&gt;
+
+&lt;p&gt;Currently there is an open issue &lt;a href=&#34;https://github.com/dotcloud/docker/pull/2687&#34;&gt;https://github.com/dotcloud/docker/pull/2687&lt;/a&gt; to allow self-signed certificates.  For now you will need a certificate issued from a standard CA.&lt;/p&gt;
+
+&lt;pre&gt;
+&lt;code class=&#34;go&#34;&gt;
+package main
+
+import (
+    &#34;github.com/foo/bar&#34;
+)
+
+func main () {
+    fmt.Println(&#34;Foo&#34;)
+}
+&lt;/code&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;Simple Quickstart:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;docker pull shipyard/private-registry&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;docker run -name registry -p 443 -v /path/to/cert_and_key:/opt/ssl -e SSL_CERT_PATH=/opt/ssl/cert.crt -e SSL_CERT_KEY_PATH=/opt/ssl/cert.key shipyard/private-registry&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;docker port registry 443&lt;/code&gt; (this will show you the mapped port)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The default username is &lt;code&gt;admin&lt;/code&gt; with a password of &lt;code&gt;docker&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now you should be able to login to your private registry (you can set an &lt;code&gt;/etc/hosts&lt;/code&gt; entry for use with your certificate - replace the port with the port from above):&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker login https://registry.mydomain.com:49154&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Use &lt;code&gt;admin&lt;/code&gt; for username and &lt;code&gt;docker&lt;/code&gt; for password.  You can leave the email blank.&lt;/p&gt;
+
+&lt;p&gt;Once logged in you can now build an image:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker build -t registry.mydomain.com:49154/redis&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;And then push:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker push registry.mydomain.com:49154/redis&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;To manage users, open a browser to &lt;a href=&#34;https://registry.mydomain.com:49154/manage&#34;&gt;https://registry.mydomain.com:49154/manage&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you have not checked out the Docker registry yet, it is a great compliment to Docker and I highly recommend.&lt;/p&gt;
+
+&lt;p&gt;Shipyard Private Registry: &lt;a href=&#34;https://github.com/shipyard/docker-private-registry&#34;&gt;https://github.com/shipyard/docker-private-registry&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Docker Registry: &lt;a href=&#34;https://github.com/dotcloud/docker-registry&#34;&gt;https://github.com/dotcloud/docker-registry&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
