@@ -2,14 +2,44 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://localhost:1313/</loc>
-    <lastmod>2014-06-22T23:30:11+00:00</lastmod>
+    <loc>/</loc>
+    <lastmod>2014-11-21T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/2014/06/docker-registry/</loc>
-    <lastmod>2014-06-22T23:30:11+00:00</lastmod>
+    <loc>/2014/11/Logging-with-ELK-and-Docker/</loc>
+    <lastmod>2014-11-21T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2014/01/Docker-Private-Registry/</loc>
+    <lastmod>2014-01-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2013/09/Shipyard-Container-Recovery/</loc>
+    <lastmod>2013-09-22T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2013/09/Shipyard-UI-Refresh/</loc>
+    <lastmod>2013-09-09T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2013/08/Logstash-and-Kibana-via-Docker/</loc>
+    <lastmod>2013-08-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2013/07/Shipyard-Container-Attaching/</loc>
+    <lastmod>2013-07-12T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2013/07/Shipyard-Applications/</loc>
+    <lastmod>2013-07-09T00:00:00+00:00</lastmod>
   </url>
   
 </urlset>

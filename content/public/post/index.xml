@@ -1,20 +1,105 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-      <title>Posts on ehazlett </title>
+      <title>Posts on @ehazlett </title>
       <generator uri="https://hugo.spf13.com">Hugo</generator>
-    <link>http://localhost:1313/post/index.xml</link>
+    <link>/post/index.xml/</link>
     <language>en-us</language>
     
     
-    <updated>Sun, 22 Jun 2014 23:30:11 UTC</updated>
+    <updated>Fri, 21 Nov 2014 00:00:00 UTC</updated>
     
     <item>
-      <title>docker registry</title>
-      <link>http://localhost:1313/2014/06/docker-registry/</link>
-      <pubDate>Sun, 22 Jun 2014 23:30:11 UTC</pubDate>
+      <title>Logging with ELK and Docker</title>
+      <link>/2014/11/Logging-with-ELK-and-Docker/</link>
+      <pubDate>Fri, 21 Nov 2014 00:00:00 UTC</pubDate>
       
-      <guid>http://localhost:1313/2014/06/docker-registry/</guid>
+      <guid>/2014/11/Logging-with-ELK-and-Docker/</guid>
+      <description>
+
+&lt;p&gt;Elasticsearch, Logstash and Kibana (known as the &amp;ldquo;ELK&amp;rdquo; stack) provide the ability to visualize data from any source.  This is a follow up to my previous Logstash post.  This is updated with the latest versions of the components and &amp;ldquo;dockerized&amp;rdquo; for easy use and deployment.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_0&#34;&gt;Elasticsearch&lt;/h2&gt;
+
+&lt;p&gt;Elasticsearch is a distributed, real-time, indexed datastore.  It uses Lucene at its core to provide full text search functionality.  It is schema free meaning you can throw any type of data at it.  This will be the storage service for all of our logging.&lt;/p&gt;
+
+&lt;p&gt;We will start a Docker container based off an Elasticsearch image I have on the Docker Hub (&lt;a href=&#34;https://registry.hub.docker.com/u/ehazlett/elasticsearch/&#34;&gt;https://registry.hub.docker.com/u/ehazlett/elasticsearch/&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -it --rm -p 9200:9200 -p 9300:9300 --name es ehazlett/elasticsearch&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s break down that command.  First, the &lt;code&gt;--rm&lt;/code&gt; will remove this container when it exits.  The &lt;code&gt;-p 9200:9200&lt;/code&gt; and &lt;code&gt;-p 9300:9300&lt;/code&gt; tells Docker to expose and bind ports 9200 and 9300 to the host on the same ports.  We need these to be known ports due to the way Kibana expects to connect to Elasticsearch.  You should now see something like the following in the console:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[2014-11-21 19:30:08,742][INFO ][node                     ] [Modred the Mystic] version[1.4.0], pid[1], build[bc94bd8/2014-11-05T14:26:12Z]
+[2014-11-21 19:30:08,742][INFO ][node                     ] [Modred the Mystic] initializing ...
+[2014-11-21 19:30:08,745][INFO ][plugins                  ] [Modred the Mystic] loaded [], sites []
+[2014-11-21 19:30:10,693][INFO ][node                     ] [Modred the Mystic] initialized
+[2014-11-21 19:30:10,694][INFO ][node                     ] [Modred the Mystic] starting ...
+[2014-11-21 19:30:10,763][INFO ][transport                ] [Modred the Mystic] bound_address {inet[/0:0:0:0:0:0:0:0:9300]}, publish_address {inet[/172.17.0.46:9300]}
+[2014-11-21 19:30:10,773][INFO ][discovery                ] [Modred the Mystic] elasticsearch/VaWr5ap8QOmLOqQKXm7U0w
+[2014-11-21 19:30:14,543][INFO ][cluster.service          ] [Modred the Mystic] new_master [Modred the Mystic][VaWr5ap8QOmLOqQKXm7U0w][ed1e2f0c4776][inet[/172.17.0.46:9300]], reason: zen-disco-join (elected_as_master)
+[2014-11-21 19:30:14,559][INFO ][http                     ] [Modred the Mystic] bound_address {inet[/0:0:0:0:0:0:0:0:9200]}, publish_address {inet[/172.17.0.46:9200]}
+[2014-11-21 19:30:14,559][INFO ][node                     ] [Modred the Mystic] started
+[2014-11-21 19:30:14,567][INFO ][gateway                  ] [Modred the Mystic] recovered [0] indices into cluster_state
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;toc_1&#34;&gt;Logstash&lt;/h2&gt;
+
+&lt;p&gt;Logstash is a tool for receiving and processing log data.  You can setup multiple inputs such as stdin or syslog, multiple processors such as adding fields or formatting and mutliple outputs such as stdout or elasticsearch.  We will use a simple config (that is included in the Docker image) that accepts stdin and syslog and outputs to stdout and elasticsearch.  The Docker image is on the Docker Hub (&lt;a href=&#34;https://registry.hub.docker.com/u/ehazlett/logstash/&#34;&gt;https://registry.hub.docker.com/u/ehazlett/logstash/&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;We will start a Logstash container listening on port 5000 for syslog input:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -it --rm \
+    -p 5000:5000 \
+    -p 5000:5000/udp \
+    --link es:elasticsearch \
+    ehazlett/logstash -f /etc/logstash.conf.sample&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Once again, the &lt;code&gt;-p 5000:5000&lt;/code&gt; and &lt;code&gt;-p 5000:5000/udp&lt;/code&gt; tells Docker to listen on port 5000 for both TCP and UDP and forward to port 5000 in the container.  We are using a link to enable the Logstash container to locate the Elasticsearch container.  The &lt;code&gt;-f /etc/logstash.conf.sample&lt;/code&gt; is the sample config bundled in the container.  You could easily add your own config file using volumes.&lt;/p&gt;
+
+&lt;p&gt;Once started you will see a couple warnings about the &lt;code&gt;tcp&lt;/code&gt; and &lt;code&gt;udp&lt;/code&gt; plugins using a milestone release.  These can be safely ignored.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_2&#34;&gt;Kibana&lt;/h2&gt;
+
+&lt;p&gt;Kibana is a UI that provides real-time interaction with data from Elasticsearch.  It can do time series, custom dashboards and a lot more.  We will be using the default dashboard.&lt;/p&gt;
+
+&lt;p&gt;In order for Kibana to work, you need to be able to access to Elasticsearch from your client (browser).  This is by design in Kibana.  For this post we will simply access Elasticsearch direct in the browser however, this is not recommended for production setups unless you have other access controls protecting your Elasticsearch instance.  Otherwise, anyone can connect to you Elasticsearch host and see you logs.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -it --rm -p 80:80 ehazlett/kibana&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;This starts a container from my Kibana image (&lt;a href=&#34;https://registry.hub.docker.com/u/ehazlett/kibana/&#34;&gt;https://registry.hub.docker.com/u/ehazlett/kibana/&lt;/a&gt;).  This binds to your host on port 80.&lt;/p&gt;
+
+&lt;p&gt;You should now be able to open a browser to &lt;code&gt;http://&amp;lt;your-host-ip&amp;gt;/index.html#/dashboard/file/logstash.json&lt;/code&gt; and see the Kibana default logstash dashboard:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/kibana.png&#34; alt=&#34;Kibana&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_3&#34;&gt;Logs&lt;/h2&gt;
+
+&lt;p&gt;Now that you have an &amp;ldquo;ELK&amp;rdquo; stack deployed, you can send logs to it.  Any mechanism that sends logs to syslog can use this.  For example in Debian/Ubuntu, you can configure &lt;code&gt;rsyslog&lt;/code&gt; to forward logs to Logstash by adding &lt;code&gt;*.*   @@&amp;lt;your-host-ip&amp;gt;:5000&lt;/code&gt; in &lt;code&gt;/etc/rsyslog.conf&lt;/code&gt;.  Make sure to restart &lt;code&gt;rsyslog&lt;/code&gt;.  You should start seeing logs in Kibana.&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_4&#34;&gt;Docker&lt;/h2&gt;
+
+&lt;p&gt;For an added bonus, we can easily add centralized logging for Docker containers.  Jeff Linday&amp;rsquo;s wonderful &amp;ldquo;logspout&amp;rdquo; application (&lt;a href=&#34;https://github.com/progrium/logspout&#34;&gt;https://github.com/progrium/logspout&lt;/a&gt;) can ship logs to a variety of facilities including syslog:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run --rm -v /var/run/docker.sock:/tmp/docker.sock progrium/logspout syslog://&amp;lt;host-ip&amp;gt;:5000&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;You can now run a test container like so:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run --rm debian:jessie apt-get update&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;You should see the output in Kibana.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/kibana-logs.png&#34; alt=&#34;Kibana Logs&#34; /&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Docker Private Registry</title>
+      <link>/2014/01/Docker-Private-Registry/</link>
+      <pubDate>Fri, 10 Jan 2014 00:00:00 UTC</pubDate>
+      
+      <guid>/2014/01/Docker-Private-Registry/</guid>
       <description>&lt;p&gt;One of the best features in &lt;a href=&#34;http://docker.io&#34;&gt;Docker&lt;/a&gt; is the ability to build and share images.  The public Docker index is a great place to find and share images.  However, if you want to have a private registry that is in your control (inside the firewall, etc.) this is where the &lt;a href=&#34;https://github.com/dotcloud/docker-registry&#34;&gt;Docker Registry&lt;/a&gt; shines.&lt;/p&gt;
 
 &lt;p&gt;The Docker Registry is an application that powers the public index.  The Docker team has put a lot of work into making it easy to run a standalone registry.  This gives you a complete registry in your control.&lt;/p&gt;
@@ -22,20 +107,6 @@
 &lt;p&gt;With this deployed you can have a private image store but anyone can push/pull to and from it.  To make it private, I augmented the &lt;code&gt;stackbrew/registry&lt;/code&gt; image with Nginx that requires authentication.  I also added a simple Flask application that enables user management.&lt;/p&gt;
 
 &lt;p&gt;Currently there is an open issue &lt;a href=&#34;https://github.com/dotcloud/docker/pull/2687&#34;&gt;https://github.com/dotcloud/docker/pull/2687&lt;/a&gt; to allow self-signed certificates.  For now you will need a certificate issued from a standard CA.&lt;/p&gt;
-
-&lt;pre&gt;
-&lt;code class=&#34;go&#34;&gt;
-package main
-
-import (
-    &#34;github.com/foo/bar&#34;
-)
-
-func main () {
-    fmt.Println(&#34;Foo&#34;)
-}
-&lt;/code&gt;
-&lt;/pre&gt;
 
 &lt;p&gt;Simple Quickstart:&lt;/p&gt;
 
@@ -63,11 +134,285 @@ func main () {
 
 &lt;p&gt;To manage users, open a browser to &lt;a href=&#34;https://registry.mydomain.com:49154/manage&#34;&gt;https://registry.mydomain.com:49154/manage&lt;/a&gt;.&lt;/p&gt;
 
+&lt;p&gt;&lt;img src=&#34;/images/docker-private-registry-management.png&#34; alt=&#34;Docker Private Registry Management&#34; /&gt;
+&lt;/p&gt;
+
 &lt;p&gt;If you have not checked out the Docker registry yet, it is a great compliment to Docker and I highly recommend.&lt;/p&gt;
 
 &lt;p&gt;Shipyard Private Registry: &lt;a href=&#34;https://github.com/shipyard/docker-private-registry&#34;&gt;https://github.com/shipyard/docker-private-registry&lt;/a&gt;&lt;/p&gt;
 
 &lt;p&gt;Docker Registry: &lt;a href=&#34;https://github.com/dotcloud/docker-registry&#34;&gt;https://github.com/dotcloud/docker-registry&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Shipyard: Container Recovery</title>
+      <link>/2013/09/Shipyard-Container-Recovery/</link>
+      <pubDate>Sun, 22 Sep 2013 00:00:00 UTC</pubDate>
+      
+      <guid>/2013/09/Shipyard-Container-Recovery/</guid>
+      <description>&lt;p&gt;Continuing our push towards production grade Docker management, the latest feature released is container recovery.  This allows a container to be marked as &amp;ldquo;protected&amp;rdquo; and Shipyard will start monitoring it for failures.  Enabling recovery is as simple as a toggle in the container details.  Here is how it works.&lt;/p&gt;
+
+&lt;p&gt;Shipyard uses a queue for background tasks.  With container recovery, a scheduled task runs on a specified interval that monitors the protected containers.  On a side note, we originally used the Python RQ library for tasks but we ran into issues with scheduled tasks and the RQ scheduler.   We decided to switch to Celery but still keep the same Redis backend.  If a protected container exits, stops, is destroyed, etc. Shipyard will launch a new container using the exact same parameters.  It does this by using the cached copy of the container metadata.  To prevent recovery loops, there is a check to see how many times a container has recovered.  If this passes the specified setting, an exception is raised and Shipyard stops attempting recovery.&lt;/p&gt;
+
+&lt;p&gt;The recovery alone keeps standalone containers available by re-launching with the same port specs.  However, when used with Shipyard applications it allows a public facing container group to maintain service and heal on failure.&lt;/p&gt;
+
+&lt;p&gt;We are pushing hard and committing time and resources from Arcus to drive development.  If you would like to see a feature or improvement please submit an issue or jump on IRC.  And as always, we would love to hear feedback :)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Shipyard: UI Refresh</title>
+      <link>/2013/09/Shipyard-UI-Refresh/</link>
+      <pubDate>Mon, 09 Sep 2013 00:00:00 UTC</pubDate>
+      
+      <guid>/2013/09/Shipyard-UI-Refresh/</guid>
+      <description>
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ehazlett/shipyard&#34;&gt;Shipyard&lt;/a&gt; just received a significant user
+interface &amp;ldquo;refresh&amp;rdquo;.  Behind the scenes I moved to almost all standard templating
+instead of so much AJAX.  Visibly it has been updated to Bootstrap3 and has more polish.
+Pages like container details have more information and it is not quite so bland.&lt;/p&gt;
+
+&lt;p&gt;Here are a few screenshots:&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_0&#34;&gt;Login&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/ui-refresh-login.png&#34; alt=&#34;Login&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_1&#34;&gt;Containers&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/ui-refresh-containers.png&#34; alt=&#34;Containers&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;toc_2&#34;&gt;Container Details&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/ui-refresh-container-details.png&#34; alt=&#34;Container Details&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;&amp;hellip;more screenshots on Github&amp;hellip;&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;With the refresh I wanted to add a better base feel to it.  Granted it needs
+a lot more love (pull requests welcome!) but I think it is better than before.&lt;/p&gt;
+
+&lt;p&gt;The roadmap is packed with goodness.  Next up I want to start gathering
+statistics for containers and hosts.  After that will be an API and then &amp;ldquo;Blueprints&amp;rdquo;.
+I will go into detail in another post but a blueprint is essentially a way
+to map and connect containers (dependencies, environment variable injection, etc.)&lt;/p&gt;
+
+&lt;p&gt;You can launch the new Shipyard by &lt;code&gt;docker run ehazlett/shipyard&lt;/code&gt; (make sure to
+&lt;code&gt;docker pull ehazlett/shipyard&lt;/code&gt; if you already have the image to get the latest).&lt;/p&gt;
+
+&lt;p&gt;For more information and updated screenshots source is on &lt;a href=&#34;https://github.com/ehazlett/shipyard&#34;&gt;Github&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;As usual, thanks to the &lt;a href=&#34;http://docker.io&#34;&gt;Docker&lt;/a&gt; team for kicking so much ass :)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Logstash and Kibana via Docker</title>
+      <link>/2013/08/Logstash-and-Kibana-via-Docker/</link>
+      <pubDate>Wed, 28 Aug 2013 00:00:00 UTC</pubDate>
+      
+      <guid>/2013/08/Logstash-and-Kibana-via-Docker/</guid>
+      <description>
+
+&lt;p&gt;Logstash is an amazing log management application.  Backed by ElasticSearch, it
+collects, parses, and indexes logs.  Kibana is an alternative UI for searching
+and analyzing the log data in elasticsearch sent via logstash.  Version 3 of
+Kibana is beautiful and revamped to require little configuration if using
+ElasticSearch.  Here is a quick way to build out a distributed logging platform
+using Docker.&lt;/p&gt;
+
+&lt;p&gt;At Arcus, we are all in with Docker and have several repositories for various
+applications and services.  We will use a few of them in this example.  We have
+Github repositories with all of the source for the Docker repos as well; links
+below.&lt;/p&gt;
+
+&lt;h1 id=&#34;toc_0&#34;&gt;ElasticSearch&lt;/h1&gt;
+
+&lt;p&gt;We will first start an ElasticSearch container for the data storage.  The Arcus
+Logstash image allows using an embedded ElasticSearch but we will use a separate
+one.&lt;/p&gt;
+
+&lt;p&gt;Launch an ElasticSearch container:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -d arcus/elasticsearch&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Get the port (and host if running a remote docker instance) for the ElasticSearch
+container:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker ps&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Will show something like:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;4d19e28a2774        arcus/elasticsearch:latest   /opt/elasticsearch/b   3 seconds ago       Up 2 seconds        49157-&amp;gt;9300, 49158-&amp;gt;9200&lt;/code&gt;&lt;/p&gt;
+
+&lt;h1 id=&#34;toc_1&#34;&gt;Logstash&lt;/h1&gt;
+
+&lt;p&gt;We will now setup logstash.  The Arcus repo contains a default configuration
+but you can specify your own if desired.  The default will setup Logstash to
+accept syslog as an input and output to ElasticSearch.&lt;/p&gt;
+
+&lt;p&gt;Launch a Logstash container using the ElasticSearch host/port as environment
+variables:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -d -e ES_HOST=&amp;lt;DOCKER_HOST_IP&amp;gt; -e ES_PORT=&amp;lt;DOCKER_CONTAINER_PORT&amp;gt; arcus/logstash&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Replace &lt;code&gt;&amp;lt;DOCKER_HOST_IP&amp;gt;&lt;/code&gt; with the IP of your docker host (i.e. your public
+facing IP, perferably not 127.0.0.1) and &lt;code&gt;&amp;lt;DOCKER_CONTAINER_PORT&amp;gt;&lt;/code&gt; with the port
+that was allocated for port 9300.&lt;/p&gt;
+
+&lt;h1 id=&#34;toc_2&#34;&gt;Kibana&lt;/h1&gt;
+
+&lt;p&gt;Now for Kibana.  We will be using the milestone 2 release.&lt;/p&gt;
+
+&lt;p&gt;Launch a Kibana container using the ElasticSearch host/port as environment
+variables:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -d -e ES_HOST=&amp;lt;DOCKER_HOST_IP&amp;gt; -e ES_PORT=&amp;lt;DOCKER_CONTAINER_PORT&amp;gt; arcus/kibana&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Replace &lt;code&gt;&amp;lt;DOCKER_HOST_IP&amp;gt;&lt;/code&gt; with the IP of your docker host (i.e. your public
+facing IP, perferably not 127.0.0.1) and &lt;code&gt;&amp;lt;DOCKER_CONTAINER_PORT&amp;gt;&lt;/code&gt; with the port
+that was allocated for port 9200.&lt;/p&gt;
+
+&lt;p&gt;Get the port allocated for Kibana on port 80:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker ps&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Open a browser to &lt;code&gt;http://&amp;lt;DOCKER_HOST_IP&amp;gt;:&amp;lt;KIBANA_DOCKER_PORT&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;You should see this:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/kibana.png&#34; alt=&#34;Kibana3&#34; /&gt;
+&lt;/p&gt;
+
+&lt;h1 id=&#34;toc_3&#34;&gt;Syslog&lt;/h1&gt;
+
+&lt;p&gt;We will now launch a container to send some data.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;docker run -i -t base /bin/bash&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;In the container run the following:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;echo &amp;quot;*.* @@&amp;lt;DOCKER_HOST_IP&amp;gt;:&amp;lt;LOGSTASH_CONTAINER_PORT&amp;gt;&amp;quot; &amp;gt;&amp;gt; /etc/rsyslog.d/50-default.conf&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Replace &lt;code&gt;&amp;lt;DOCKER_HOST_IP&amp;gt;&lt;/code&gt; with the IP of your docker host (i.e. your public
+facing IP, perferably not 127.0.0.1) and &lt;code&gt;&amp;lt;LOGSTASH_CONTAINER_PORT&amp;gt;&lt;/code&gt; with the port
+that was allocated for port 514.&lt;/p&gt;
+
+&lt;p&gt;Now still in the container run the following to start rsyslog:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;rsyslogd -c5&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;You should see it logging now:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/images/kibana_data.png&#34; alt=&#34;Kibana3 Data&#34; /&gt;
+&lt;/p&gt;
+
+&lt;p&gt;With just a short while playing with the new Kibana and the editor, there is almost
+a limitless possibility of graphs, etc. for logging.  Hopefully this is a quick
+way to test/deploy it yourself.&lt;/p&gt;
+
+&lt;h1 id=&#34;toc_4&#34;&gt;Docker Repositories&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ElasticSearch &lt;a href=&#34;https://github.com/arcus-io/docker-elasticsearch&#34;&gt;https://github.com/arcus-io/docker-elasticsearch&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Logstash &lt;a href=&#34;https://github.com/arcus-io/docker-logstash&#34;&gt;https://github.com/arcus-io/docker-logstash&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Kibana &lt;a href=&#34;https://github.com/arcus-io/docker-kibana&#34;&gt;https://github.com/arcus-io/docker-kibana&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Shipyard: Container Attaching</title>
+      <link>/2013/07/Shipyard-Container-Attaching/</link>
+      <pubDate>Fri, 12 Jul 2013 00:00:00 UTC</pubDate>
+      
+      <guid>/2013/07/Shipyard-Container-Attaching/</guid>
+      <description>&lt;p&gt;One of the great features of &lt;a href=&#34;http://docker.io&#34;&gt;Docker&lt;/a&gt; is the ability to run interactive containers.
+You can attach to a container which connects you to a terminal.  From there it is just
+like any other virtual machine or instance.  I have wanted something like this in
+Shipyard since I started it, but it was on the back burner.  Until a few days ago.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://github.com/ukd1&#34;&gt;ukd1&lt;/a&gt; had mentioned in #docker that they were building a
+web based terminal utilizing websockets to attach to containers from the browser.
+ukd1 and their team worked on it that afternoon and by the evening there was a pull
+request for Shipyard.&lt;/p&gt;
+
+&lt;p&gt;In order for it to work, Docker needs websocket support in the api.  There is a pull
+request open but has not been merged as of this writing.  To get it working however,
+is rather simple:&lt;/p&gt;
+
+&lt;p&gt;Clone the latest Docker and checkout the latest stable tag (currently v0.4.8):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;git clone &lt;a href=&#34;https://github.com/dotcloud/docker.git&#34;&gt;https://github.com/dotcloud/docker.git&lt;/a&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;git checkout v0.4.8&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;
+Add the upstream from the pull request [dotcloud/docker#1146](https://github.com/dotcloud/docker/issues/1146):
+
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;git remote add ws &lt;a href=&#34;https://github.com/benoitc/docker.git&#34;&gt;https://github.com/benoitc/docker.git&lt;/a&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;
+Create a websocket branch (optional):
+
+    ```
+git checkout -b websockets
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Merge code from pull request:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;git pull ws feature/attach_ws
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Build new Docker binary:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;make
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now you can run &lt;code&gt;bin/docker&lt;/code&gt; and use Shipyard to access the console via websockets.&lt;/p&gt;
+
+&lt;p&gt;The console support is still in branch (&lt;code&gt;terminal&lt;/code&gt;) in the Shipyard repository until the
+1146 pull request gets merged and released as stable in Docker.&lt;/p&gt;
+
+&lt;p&gt;Here is a quick screencast showing the feature: &lt;a href=&#34;http://www.youtube.com/watch?v=aLlp-kemx_s&#34;&gt;http://www.youtube.com/watch?v=aLlp-kemx_s&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Shipyard: Applications</title>
+      <link>/2013/07/Shipyard-Applications/</link>
+      <pubDate>Tue, 09 Jul 2013 00:00:00 UTC</pubDate>
+      
+      <guid>/2013/07/Shipyard-Applications/</guid>
+      <description>
+
+&lt;p&gt;The next major feature for &lt;a href=&#34;https://github.com/ehazlett/shipyard&#34;&gt;Shipyard&lt;/a&gt; is &amp;ldquo;applications&amp;rdquo;.  These are a collection of containers that are accessible by a domain name.  Shipyard uses &lt;a href=&#34;https://github.com/dotcloud/hipache&#34;&gt;Hipache&lt;/a&gt; for the frontend load balancer.&lt;/p&gt;
+
+&lt;p&gt;Using Shipyard, you can launch a set of containers that expose a backend port.  You can then create an &amp;ldquo;application&amp;rdquo; which configures Hipache and routes traffic to all containers in that app on the container backend port.  Configuration is automatic and you can have multiple containers across multiple hosts and Hipache will balance and direct traffic to them.&lt;/p&gt;
+
+&lt;h3 id=&#34;toc_0&#34;&gt;Deeper Dive&lt;/h3&gt;
+
+&lt;p&gt;Under the covers, Shipyard contains the configuration for the application.  Upon attaching a container to the application, Shipyard will queue a task to update the frontend mapping in Redis which Hipache uses.  The configuration will also be updated upon container restart since the port(s) can change.&lt;/p&gt;
+
+&lt;p&gt;Upcoming plans for Shipyard include stats collection.  These will collect the number of requests, response times, etc. from Hipache for applications.  With this, we can do things like autoscaling.  Lots of stuff planned &amp;ndash; join in :)&lt;/p&gt;
+
+&lt;h3 id=&#34;toc_1&#34;&gt;More&lt;/h3&gt;
+
+&lt;p&gt;Read more on applications &lt;a href=&#34;https://github.com/ehazlett/shipyard/wiki/Applications&#34;&gt;here&lt;/a&gt; and source is &lt;a href=&#34;https://github.com/ehazlett/shipyard&#34;&gt;https://github.com/ehazlett/shipyard&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;For a screencast showing applications, visit &lt;a href=&#34;https://www.youtube.com/watch?v=pLX3QF17Sj0&#34;&gt;https://www.youtube.com/watch?v=pLX3QF17Sj0&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
     
