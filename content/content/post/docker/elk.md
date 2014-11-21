@@ -14,7 +14,13 @@ Elasticsearch is a distributed, real-time, indexed datastore.  It uses Lucene at
 
 We will start a Docker container based off an Elasticsearch image I have on the Docker Hub (https://registry.hub.docker.com/u/ehazlett/elasticsearch/)
 
-`docker run -it --rm -p 9200:9200 -p 9300:9300 --name es ehazlett/elasticsearch`
+```bash
+docker run -it --rm \
+    -p 9200:9200 \
+    -p 9300:9300 \
+    --name es \
+    ehazlett/elasticsearch
+```
 
 Let's break down that command.  First, the `--rm` will remove this container when it exits.  The `-p 9200:9200` and `-p 9300:9300` tells Docker to expose and bind ports 9200 and 9300 to the host on the same ports.  We need these to be known ports due to the way Kibana expects to connect to Elasticsearch.  You should now see something like the following in the console:
 
@@ -37,11 +43,13 @@ Logstash is a tool for receiving and processing log data.  You can setup multipl
 
 We will start a Logstash container listening on port 5000 for syslog input:
 
-`docker run -it --rm \
+```bash
+docker run -it --rm \
     -p 5000:5000 \
     -p 5000:5000/udp \
     --link es:elasticsearch \
-    ehazlett/logstash -f /etc/logstash.conf.sample`
+    ehazlett/logstash -f /etc/logstash.conf.sample
+```
 
 Once again, the `-p 5000:5000` and `-p 5000:5000/udp` tells Docker to listen on port 5000 for both TCP and UDP and forward to port 5000 in the container.  We are using a link to enable the Logstash container to locate the Elasticsearch container.  The `-f /etc/logstash.conf.sample` is the sample config bundled in the container.  You could easily add your own config file using volumes.
 
@@ -52,7 +60,9 @@ Kibana is a UI that provides real-time interaction with data from Elasticsearch.
 
 In order for Kibana to work, you need to be able to access to Elasticsearch from your client (browser).  This is by design in Kibana.  For this post we will simply access Elasticsearch direct in the browser however, this is not recommended for production setups unless you have other access controls protecting your Elasticsearch instance.  Otherwise, anyone can connect to you Elasticsearch host and see you logs.
 
-`docker run -it --rm -p 80:80 ehazlett/kibana`
+```bash
+docker run -it --rm -p 80:80 ehazlett/kibana
+```
 
 This starts a container from my Kibana image (https://registry.hub.docker.com/u/ehazlett/kibana/).  This binds to your host on port 80.
 
@@ -66,11 +76,17 @@ Now that you have an "ELK" stack deployed, you can send logs to it.  Any mechani
 ## Docker
 For an added bonus, we can easily add centralized logging for Docker containers.  Jeff Linday's wonderful "logspout" application (https://github.com/progrium/logspout) can ship logs to a variety of facilities including syslog:
 
-`docker run --rm -v /var/run/docker.sock:/tmp/docker.sock progrium/logspout syslog://<host-ip>:5000`
+```bash
+docker run --rm \
+    -v /var/run/docker.sock:/tmp/docker.sock \
+    progrium/logspout syslog://<host-ip>:5000
+```
 
 You can now run a test container like so:
 
-`docker run --rm debian:jessie apt-get update`
+```bash
+docker run --rm debian:jessie apt-get update
+```
 
 You should see the output in Kibana.
 
