@@ -1,0 +1,14 @@
+{
+    "name": "blog",
+    "version": "0.0.1",
+    "labels": [
+        "us-east-1",
+        "us-west-2"
+    ],
+    "instances": 2,
+    "environment": {
+        "DEMO": "true"
+    },
+    "restart_policy": "always",
+    "dockerfile_path": "/Dockerfile"
+}
