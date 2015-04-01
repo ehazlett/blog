@@ -12,5 +12,7 @@
     ],
     "restart_policy": "always",
     "dockerfile_path": "/Dockerfile",
+    "hostname": "blog",
+    "domain": "evanhazlett.com",
     "publish_all_ports": true
 }
