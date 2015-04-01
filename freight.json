@@ -7,7 +7,7 @@
     ],
     "instances": 2,
     "environment": {
-        "DEMO": "true"
+        "DEMO=true"
     },
     "restart_policy": "always",
     "dockerfile_path": "/Dockerfile"
