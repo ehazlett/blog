@@ -10,5 +10,6 @@
         "DEMO=true"
     },
     "restart_policy": "always",
-    "dockerfile_path": "/Dockerfile"
+    "dockerfile_path": "/Dockerfile",
+    "publish_all_ports": true
 }
