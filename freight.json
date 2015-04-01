@@ -6,9 +6,9 @@
         "region": "us-west-2"
     },
     "instances": 2,
-    "environment": {
+    "environment": [
         "DEMO=true"
-    },
+    ],
     "restart_policy": "always",
     "dockerfile_path": "/Dockerfile",
     "publish_all_ports": true
