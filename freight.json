@@ -1,6 +1,7 @@
 {
     "name": "blog",
     "version": "0.0.1",
+    "repo": "github.com/ehazlett/blog",
     "labels": {
         "region": "default",
         "internal": "true"
