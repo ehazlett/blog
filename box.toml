@@ -1,0 +1,11 @@
+id = "blog"
+package = "blog"
+
+[resources]
+cpus = 1.0
+mem_limit = 64
+
+[service]
+interface = "eth0"
+port = 8080
+port_type = "tcp"

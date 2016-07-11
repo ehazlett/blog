@@ -1,0 +1,16 @@
+id = "blog"
+version = "0.1"
+base_package = "base"
+
+[build]
+  script = '''
+#!/bin/bash
+cp -r /run/context/content /content
+cp /run/context/blog /blog
+'''
+
+[process]
+    uid = 0
+    args = [
+        "/blog",
+    ]
