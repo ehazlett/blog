@@ -8,3 +8,4 @@ build:
 
 bundle:
 	@sudo box --debug build -c context package.toml
+	@sudo box --debug packages create blog
