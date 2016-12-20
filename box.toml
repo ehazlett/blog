@@ -1,11 +1,28 @@
-id = "blog"
-package = "blog"
+id = "evanhazlett.com"
+package = "evanhazlett.com"
+labels = [
+    "blog"
+]
+sla = "SERVICE"
 
 [resources]
-cpus = 1.0
+cpus = 0.25
 mem_limit = 64
 
-[service]
-interface = "eth0"
-port = 8080
-port_type = "tcp"
+[process]
+cwd = "/go/bin"
+args = [
+    "blog",
+    "-p",
+    "/go/src/github.com/ehazlett/blog/content/public"
+]
+
+[services]
+    [services.blog]
+    interface = "eth0"
+    port = 8080
+    port_type = "tcp"
+
+    [[services.blog.checks]]
+    type = "tcp"
+    interval = 10

@@ -1,16 +1,34 @@
-id = "blog"
-version = "0.1"
-base_package = "base"
+id = "evanhazlett.com"
+version = "1.0"
+base = "ubuntu"
 
 [build]
-  script = '''
+env = [
+    "GOPATH=/go",
+    "GOROOT=/usr/local/go",
+    "GO_VERSION=1.7.4",
+]
+script = '''
 #!/bin/bash
-cp -r /run/context/content /content
-cp /run/context/blog /blog
+apt-get update
+apt-get install -y --no-install-recommends curl ca-certificates git-core
+
+curl -sSL https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/golang.tar.gz
+tar zxf /tmp/golang.tar.gz -C /usr/local
+rm -rf /tmp/golang.tar.gz
+
+PATH=$PATH:/usr/local/go/bin
+go get github.com/ehazlett/blog
 '''
 
-[process]
-    uid = 0
-    args = [
-        "/blog",
-    ]
+[update]
+env = [
+    "GOPATH=/go",
+    "GOROOT=/usr/local/go",
+    "GO_VERSION=1.7.4",
+]
+script = '''
+#!/bin/bash
+PATH=$PATH:/usr/local/go/bin
+go get -u github.com/ehazlett/blog
+'''

@@ -6,16 +6,18 @@ import (
 )
 
 var (
-	LISTEN_ADDR string
+	listenAddr string
+	publicDir  string
 )
 
 func init() {
-	flag.StringVar(&LISTEN_ADDR, "l", ":8080", "Listen address")
+	flag.StringVar(&listenAddr, "l", ":8080", "Listen address")
+	flag.StringVar(&publicDir, "p", "./content/public", "Content directory")
 
 }
 
 func main() {
 	flag.Parse()
-	panic(http.ListenAndServe(LISTEN_ADDR, http.FileServer(http.Dir("./content/public"))))
+	panic(http.ListenAndServe(listenAddr, http.FileServer(http.Dir(publicDir))))
 
 }
