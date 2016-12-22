@@ -12,7 +12,7 @@ mem_limit = 64
 [process]
 cwd = "/go/bin"
 args = [
-    "blog",
+    "./blog",
     "-p",
     "/go/src/github.com/ehazlett/blog/content/public"
 ]
